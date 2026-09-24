@@ -1,0 +1,59 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"expr": "sum by (route, method) (rate(visionforge_http_requests_total[1m]))", "legendFormat": "{{method}} {{route}}"}]
+    },
+    {
+      "title": "p95 HTTP Latency",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, route) (rate(visionforge_http_request_duration_seconds_bucket[1m])))", "legendFormat": "{{route}}"}]
+    },
+    {
+      "title": "Queue Depth",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+      "targets": [{"expr": "visionforge_queue_depth", "legendFormat": "depth"}]
+    },
+    {
+      "title": "Worker Active Jobs",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8},
+      "targets": [{"expr": "visionforge_worker_active_jobs", "legendFormat": "active"}]
+    },
+    {
+      "title": "Job Results",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {"expr": "rate(visionforge_jobs_succeeded_total[1m])", "legendFormat": "succeeded"},
+        {"expr": "rate(visionforge_jobs_failed_total[1m])", "legendFormat": "failed"},
+        {"expr": "rate(visionforge_jobs_retried_total[1m])", "legendFormat": "retried"}
+      ]
+    },
+    {
+      "title": "Inference Latency (p95)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, task_type) (rate(visionforge_inference_duration_seconds_bucket[1m])))", "legendFormat": "{{task_type}}"}]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["visionforge"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "VisionForge Overview",
+  "uid": "vf-overview",
+  "version": 1
+}

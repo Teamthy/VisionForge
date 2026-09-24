@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['api:8080']
+        labels: { service: 'visionforge-api' }
+
+  - job_name: worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['worker:8081']
+        labels: { service: 'visionforge-worker' }
+
+  - job_name: ml
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['ml:8090']
+        labels: { service: 'visionforge-ml' }
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8889']
+        labels: { service: 'otel-collector' }
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

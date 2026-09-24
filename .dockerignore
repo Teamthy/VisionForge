@@ -1,0 +1,41 @@
+# Keep the Docker build context lean and deterministic.
+# Root context is used by Dockerfile.api / Dockerfile.ml; apps/web has its own
+# context and its own .dockerignore.
+
+.git
+.github
+*.log
+.env
+.env.*
+!.env.example
+
+node_modules
+**/node_modules
+apps/web
+.next
+bin
+
+__pycache__
+**/__pycache__
+*.pyc
+apps/ml/artifacts
+apps/ml/benchmarks/.bench_cache
+*.onnx
+
+.gomodcache
+.gocache
+.minio-data
+.home
+.tmp
+.pytest_cache
+.ruff_cache
+
+docs
+loadtest
+scripts
+README.md
+LICENSE
+Makefile
+docker-compose.yml
+go.work
+go.work.sum

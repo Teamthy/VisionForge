@@ -1,0 +1,263 @@
+# VisionForge local development stack.
+#
+#   docker compose up
+#
+# Starts: Postgres, Redis, MinIO, OTel collector, Prometheus, Grafana,
+#          the Go API, the Go worker, the Python ML service, and the Next.js web app.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-visionforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-visionforge}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-visionforge} -d ${POSTGRES_DB:-visionforge}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-visionforge}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-change_me_in_dev}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.99.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infrastructure/monitoring/otel/collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports:
+      - "9090:9090"
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--web.enable-lifecycle"]
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: debug
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-visionforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-visionforge}
+      DATABASE_URL: postgres://${POSTGRES_USER:-visionforge}:${POSTGRES_PASSWORD:-change_me_in_dev}@postgres:5432/${POSTGRES_DB:-visionforge}?sslmode=disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_BACKEND: minio
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-visionforge}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-change_me_in_dev}
+      S3_REGION: us-east-1
+      S3_BUCKET: visionforge
+      S3_FORCE_PATH_STYLE: "true"
+      API_PORT: 8080
+      API_HOST: 0.0.0.0
+      API_BASE_URL: http://localhost:8080
+      API_CORS_ALLOWED_ORIGINS: http://localhost:3000
+      JWT_SECRET: dev-only-change-me-in-prod-please-32bytes
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 720h
+      BCRYPT_COST: 10
+      WORKER_QUEUE_NAME: visionforge:jobs
+      ML_SERVICE_URL: http://ml:8090
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    command: >
+      sh -c "
+        /app/migrate up &&
+        /app/seed &&
+        /app/api
+      "
+
+  worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: info
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-visionforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-visionforge}
+      DATABASE_URL: postgres://${POSTGRES_USER:-visionforge}:${POSTGRES_PASSWORD:-change_me_in_dev}@postgres:5432/${POSTGRES_DB:-visionforge}?sslmode=disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_BACKEND: minio
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-visionforge}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-change_me_in_dev}
+      S3_REGION: us-east-1
+      S3_BUCKET: visionforge
+      S3_FORCE_PATH_STYLE: "true"
+      ML_SERVICE_URL: http://ml:8090
+      JWT_SECRET: dev-only-change-me-in-prod-please-32bytes
+      WORKER_CONCURRENCY: 2
+      WORKER_MAX_ATTEMPTS: 4
+      WORKER_METRICS_PORT: 8081
+    ports:
+      - "8081:8081"  # worker /metrics + /healthz
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+      ml: { condition: service_healthy }
+    command: /app/worker
+
+  ml:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.ml
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: info
+      ML_ARTIFACTS_DIR: /app/artifacts
+      ML_DEVICE: cpu
+      ML_MAX_IMAGE_BYTES: 20971520
+      ML_MAX_INFERENCE_MS: 60000
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-visionforge}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-change_me_in_dev}
+    ports:
+      - "8090:8090"
+    volumes:
+      - mlartifacts:/app/artifacts
+    depends_on:
+      minio:
+        condition: service_started
+      model-init:
+        condition: service_completed_successfully
+
+  # One-shot: downloads the demo ONNX weights into the shared artifacts
+  # volume on first boot so the seeded model version resolves to a real file.
+  # Subsequent starts are no-ops (the script skips existing files).
+  model-init:
+    image: alpine:3.20
+    restart: "no"
+    volumes:
+      - ./scripts/download-demo-model.sh:/usr/local/bin/download-demo-model.sh:ro
+      - mlartifacts:/artifacts
+    environment:
+      DEST_DIR: /artifacts
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache curl >/dev/null 2>&1
+        mkdir -p /artifacts
+        # The named volume is created root-owned; the ml service runs as uid 10001.
+        chown 10001:10001 /artifacts || true
+        if [ -f /artifacts/yolov8n.onnx ]; then echo "model present"; exit 0; fi
+        curl -fsSL -o /artifacts/yolov8n.onnx.part \
+          https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx
+        echo "65158dad735be799c2466fa15e260c09558080bd530b42a8d0c3d1b419afd8b5  /artifacts/yolov8n.onnx.part" | sha256sum -c -
+        mv /artifacts/yolov8n.onnx.part /artifacts/yolov8n.onnx
+        chown 10001:10001 /artifacts/yolov8n.onnx || true
+        echo "model ready"
+
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: ../../infrastructure/docker/Dockerfile.web
+      args:
+        # Same-origin proxy mode: the browser talks only to the web origin and
+        # Next forwards /api/v1/* to http://api:8080 inside the compose network.
+        # NEXT_PUBLIC_* values are inlined at build time — change them here (or
+        # override with --build-arg) and rebuild, not at runtime.
+        NEXT_PUBLIC_API_URL: /api/v1
+        NEXT_PUBLIC_PROXY_API: "true"
+        API_INTERNAL_URL: http://api:8080
+    restart: unless-stopped
+    environment:
+      NEXTAUTH_SECRET: dev-nextauth-secret-change-me
+      NEXTAUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  mlartifacts:
+  promdata:
+  grafanadata:

@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.6
+# Build context must be the repository root:
+#   docker build -f infrastructure/docker/Dockerfile.api -t visionforge-api .
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache git ca-certificates
+WORKDIR /src
+ENV GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=0
+COPY packages ./packages
+COPY apps/api/go.mod apps/api/go.sum ./apps/api/
+WORKDIR /src/apps/api
+RUN go mod download
+COPY apps/api ./
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+RUN go build -trimpath -ldflags "-s -w" -o /out/api ./cmd/api \
+ && go build -trimpath -ldflags "-s -w" -o /out/worker ./cmd/worker \
+ && go build -trimpath -ldflags "-s -w" -o /out/migrate ./cmd/migrate \
+ && go build -trimpath -ldflags "-s -w" -o /out/seed ./cmd/seed
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates tzdata wget curl && adduser -D -u 10001 visionforge
+WORKDIR /app
+COPY --from=builder /out/api /out/worker /out/migrate /out/seed /app/
+COPY migrations /migrations
+USER visionforge
+EXPOSE 8080 8081
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 CMD wget -qO- http://localhost:8080/health || exit 1
+CMD ["/app/api"]
