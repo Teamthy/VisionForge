@@ -1,0 +1,16 @@
+# Tooling configuration for the ML service (ruff only; packaging lives in
+# requirements.txt — this app is deployed as a source tree inside a container).
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "TRY", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI declares request parts with File(...)/Form(...) default arguments —
+# the B008 pattern is the documented idiom.
+"app/main.py" = ["B008"]
+# Tests and benchmarks bootstrap sys.path before importing the app package.
+"tests/*" = ["E402"]
+"benchmarks/*" = ["E402"]
