@@ -5,6 +5,7 @@ import Providers from "./providers";
 export const metadata: Metadata = {
   title: "VisionForge — Computer Vision Inference Platform",
   description: "Production-grade computer vision inference at scale.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
