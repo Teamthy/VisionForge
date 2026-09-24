@@ -91,6 +91,13 @@ venv/
 *.bak
 *.tmp
 
+# Workspace export artifacts (repo bundles/snapshots for transport, never history)
+visionforge.bundle
+visionforge-gofmt.bundle
+visionforge-git-snapshot.tar.gz
+visionforge-artifacts.sha256
+*.patch
+
 # ML artifacts (downloaded models, never committed)
 apps/ml/artifacts/
 apps/ml/benchmarks/.bench_cache/
