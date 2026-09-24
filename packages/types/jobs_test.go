@@ -60,18 +60,18 @@ func TestTerminalStatesAreFinal(t *testing.T) {
 
 func TestErrorCodeRetriable(t *testing.T) {
 	cases := map[ErrorCode]bool{
-		ErrCodeTimeout:        true,
-		ErrCodeQueue:          true,
-		ErrCodeDatabase:       true,
-		ErrCodeStorage:        true,
-		ErrCodeMLService:      true,
-		ErrCodeInternal:       false,
-		ErrCodeInvalidInput:   false,
-		ErrCodeNotFound:       false,
-		ErrCodeUnauthorized:   false,
+		ErrCodeTimeout:          true,
+		ErrCodeQueue:            true,
+		ErrCodeDatabase:         true,
+		ErrCodeStorage:          true,
+		ErrCodeMLService:        true,
+		ErrCodeInternal:         false,
+		ErrCodeInvalidInput:     false,
+		ErrCodeNotFound:         false,
+		ErrCodeUnauthorized:     false,
 		ErrCodeUnsupportedModel: false,
-		ErrCodeCorruptFile:    false,
-		ErrCodeRateLimited:    false,
+		ErrCodeCorruptFile:      false,
+		ErrCodeRateLimited:      false,
 	}
 	for code, want := range cases {
 		if got := code.Retriable(); got != want {

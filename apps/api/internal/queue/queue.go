@@ -46,9 +46,9 @@ func NewRedisQueue(c *redis.Client, queueName string) *RedisQueue {
 }
 
 // key helpers
-func (q *RedisQueue) keyQueued() string     { return q.name + ":queued" }
-func (q *RedisQueue) keyProcessing() string { return q.name + ":processing" }
-func (q *RedisQueue) keyDead() string       { return q.name + ":dead" }
+func (q *RedisQueue) keyQueued() string           { return q.name + ":queued" }
+func (q *RedisQueue) keyProcessing() string       { return q.name + ":processing" }
+func (q *RedisQueue) keyDead() string             { return q.name + ":dead" }
 func (q *RedisQueue) keyPayload(id string) string { return q.name + ":payload:" + id }
 
 // Enqueue places a job on the queue. If delay > 0, the job is added to the

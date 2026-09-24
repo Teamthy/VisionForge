@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/visionforge/visionforge/apps/api/internal/audit"
-	"github.com/visionforge/visionforge/apps/api/internal/mlclient"
 	apperrors "github.com/visionforge/visionforge/apps/api/internal/errors"
+	"github.com/visionforge/visionforge/apps/api/internal/mlclient"
 	"github.com/visionforge/visionforge/apps/api/internal/queue"
 	"github.com/visionforge/visionforge/apps/api/internal/repository"
 	"github.com/visionforge/visionforge/apps/api/internal/storage"
@@ -56,9 +56,9 @@ type Metrics struct {
 
 // Config bundles worker configuration.
 type Config struct {
-	Concurrency       int
-	PollInterval      time.Duration
-	MaxAttempts       int
+	Concurrency  int
+	PollInterval time.Duration
+	MaxAttempts  int
 }
 
 // New creates a Worker.

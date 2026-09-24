@@ -21,11 +21,11 @@ func TestValidateFilename(t *testing.T) {
 
 func TestSanitize(t *testing.T) {
 	cases := map[string]string{
-		"../../etc/passwd":    "etc_passwd",  // base name kept, separators gone
-		"photo copy (1).jpg":  "photo_copy_1.jpg",
-		"ünïcode.jpg":          "code.jpg", // non-ascii stripped, ext preserved
-		"a\x00b.png":           "a_b.png",
-		"..":                   "_",
+		"../../etc/passwd":   "etc_passwd", // base name kept, separators gone
+		"photo copy (1).jpg": "photo_copy_1.jpg",
+		"ünïcode.jpg":        "code.jpg", // non-ascii stripped, ext preserved
+		"a\x00b.png":         "a_b.png",
+		"..":                 "_",
 	}
 	for in, wantSub := range cases {
 		got := sanitize(in)

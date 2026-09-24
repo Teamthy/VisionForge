@@ -23,10 +23,14 @@ type refreshReq struct {
 func (h *Handler) Register(c *gin.Context) {
 	var req registerReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fail(c, errBind(err)); return
+		fail(c, errBind(err))
+		return
 	}
 	u, access, refresh, exp, err := h.s.Auth.Register(c.Request.Context(), req.Email, req.Password, req.Name, clientIP(c), c.Request.UserAgent())
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	setRefreshCookie(c, refresh, exp)
 	ok(c, http.StatusCreated, gin.H{"user": u, "access_token": access, "expires_at": exp})
 }
@@ -34,10 +38,14 @@ func (h *Handler) Register(c *gin.Context) {
 func (h *Handler) Login(c *gin.Context) {
 	var req loginReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fail(c, errBind(err)); return
+		fail(c, errBind(err))
+		return
 	}
 	u, access, refresh, exp, err := h.s.Auth.Login(c.Request.Context(), req.Email, req.Password, clientIP(c), c.Request.UserAgent())
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	setRefreshCookie(c, refresh, exp)
 	ok(c, http.StatusOK, gin.H{"user": u, "access_token": access, "expires_at": exp})
 }
@@ -46,11 +54,19 @@ func (h *Handler) Refresh(c *gin.Context) {
 	var req refreshReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// fall back to cookie
-		if ck, err := c.Cookie("vf_refresh"); err == nil { req.RefreshToken = ck }
-		if req.RefreshToken == "" { fail(c, errBind(err)); return }
+		if ck, err := c.Cookie("vf_refresh"); err == nil {
+			req.RefreshToken = ck
+		}
+		if req.RefreshToken == "" {
+			fail(c, errBind(err))
+			return
+		}
 	}
 	access, refresh, exp, err := h.s.Auth.Refresh(c.Request.Context(), req.RefreshToken)
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	setRefreshCookie(c, refresh, exp)
 	ok(c, http.StatusOK, gin.H{"access_token": access, "expires_at": exp})
 }
@@ -59,10 +75,13 @@ func (h *Handler) Logout(c *gin.Context) {
 	tok, _ := c.Cookie("vf_refresh")
 	var req refreshReq
 	_ = c.ShouldBindJSON(&req)
-	if req.RefreshToken != "" { tok = req.RefreshToken }
+	if req.RefreshToken != "" {
+		tok = req.RefreshToken
+	}
 	uid := currentUserID(c)
 	if err := h.s.Auth.Logout(c.Request.Context(), tok, uid, clientIP(c), c.Request.UserAgent()); err != nil {
-		fail(c, err); return
+		fail(c, err)
+		return
 	}
 	c.SetCookie("vf_refresh", "", -1, "/", "", false, true)
 	ok(c, http.StatusOK, gin.H{"logged_out": true})
@@ -70,7 +89,10 @@ func (h *Handler) Logout(c *gin.Context) {
 
 func (h *Handler) Me(c *gin.Context) {
 	u, err := h.s.Auth.Me(c.Request.Context(), currentUserID(c))
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	ok(c, http.StatusOK, u)
 }
 

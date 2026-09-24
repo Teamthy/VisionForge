@@ -12,8 +12,8 @@ import (
 
 	"github.com/visionforge/visionforge/apps/api/internal/db"
 	"github.com/visionforge/visionforge/apps/api/internal/repository"
-	vtypes "github.com/visionforge/visionforge/packages/types"
 	"github.com/visionforge/visionforge/packages/config"
+	vtypes "github.com/visionforge/visionforge/packages/types"
 )
 
 func main() {
@@ -60,17 +60,26 @@ func main() {
 	seedModels := []struct {
 		name, desc string
 		tt         vtypes.TaskType
-		versions   []struct{ ver, art string; runtime vtypes.Runtime }
+		versions   []struct {
+			ver, art string
+			runtime  vtypes.Runtime
+		}
 	}{
 		{
 			name: "YOLOv8n-COCO", desc: "Ultralytics YOLOv8 nano trained on COCO (object detection).", tt: vtypes.TaskObjectDetection,
-			versions: []struct{ ver, art string; runtime vtypes.Runtime }{
+			versions: []struct {
+				ver, art string
+				runtime  vtypes.Runtime
+			}{
 				{"1.0.0", "artifacts/yolov8n.onnx", vtypes.RuntimeONNX},
 			},
 		},
 		{
 			name: "MobileNetV3-ImageNet", desc: "MobileNetV3-small classification on ImageNet (1000 classes).", tt: vtypes.TaskClassification,
-			versions: []struct{ ver, art string; runtime vtypes.Runtime }{
+			versions: []struct {
+				ver, art string
+				runtime  vtypes.Runtime
+			}{
 				{"1.0.0", "artifacts/mobilenetv3.onnx", vtypes.RuntimeONNX},
 			},
 		},

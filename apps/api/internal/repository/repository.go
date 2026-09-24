@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	stderrors "errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -46,9 +46,14 @@ func NewTxRunner(db *sql.DB) TxRunner { return &txRunner{db: db} }
 
 func (t *txRunner) RunTx(ctx context.Context, fn func(Executor) error) error {
 	tx, err := t.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-	if err != nil { return failExec(apperrors.KindDatabase, err, "begin tx") }
+	if err != nil {
+		return failExec(apperrors.KindDatabase, err, "begin tx")
+	}
 	defer func() {
-		if p := recover(); p != nil { _ = tx.Rollback(); panic(p) }
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p)
+		}
 	}()
 	if err := fn(tx); err != nil {
 		_ = tx.Rollback()
@@ -68,9 +73,9 @@ type Repos struct {
 	Assets        AssetRepository
 	Models        ModelRepository
 	ModelVersions ModelVersionRepository
-		Jobs          JobRepository
-		Results       ResultRepository
-		AuditLogs     AuditLogRepository
+	Jobs          JobRepository
+	Results       ResultRepository
+	AuditLogs     AuditLogRepository
 	Tx            TxRunner
 }
 
@@ -234,7 +239,9 @@ func (r *projectRepo) FindByID(ctx context.Context, id string) (*vtypes.Project,
 	return p, nil
 }
 func (r *projectRepo) ListByOwner(ctx context.Context, ownerID, cursor string, limit int) ([]vtypes.Project, string, bool, error) {
-	if limit <= 0 || limit > 200 { limit = 50 }
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
 	var qb strings.Builder
 	var args []interface{}
 	qb.WriteString(`SELECT id, owner_id, name, description, created_at, updated_at FROM projects WHERE owner_id=$1`)
@@ -242,7 +249,8 @@ func (r *projectRepo) ListByOwner(ctx context.Context, ownerID, cursor string, l
 	argn := 2
 	if cursor != "" {
 		fmt.Fprintf(&qb, " AND (created_at, id) < (SELECT created_at, id FROM projects WHERE id = $%d)", argn)
-		args = append(args, cursor); argn++
+		args = append(args, cursor)
+		argn++
 	}
 	fmt.Fprintf(&qb, " ORDER BY created_at DESC, id DESC LIMIT $%d", argn)
 	args = append(args, limit+1)
@@ -261,7 +269,10 @@ func (r *projectRepo) ListByOwner(ctx context.Context, ownerID, cursor string, l
 	}
 	hasMore := len(out) > limit
 	next := ""
-	if hasMore { out = out[:limit]; next = out[len(out)-1].ID }
+	if hasMore {
+		out = out[:limit]
+		next = out[len(out)-1].ID
+	}
 	return out, next, hasMore, rows.Err()
 }
 func (r *projectRepo) Update(ctx context.Context, id, name, description string) (*vtypes.Project, error) {
@@ -271,16 +282,22 @@ func (r *projectRepo) Update(ctx context.Context, id, name, description string) 
 		 RETURNING id, owner_id, name, description, created_at, updated_at`, id, name, description).
 		Scan(&p.ID, &p.OwnerID, &p.Name, &p.Description, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("project") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("project")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "update project")
 	}
 	return p, nil
 }
 func (r *projectRepo) Delete(ctx context.Context, id string) error {
 	res, err := r.q.ExecContext(ctx, `DELETE FROM projects WHERE id=$1`, id)
-	if err != nil { return failExec(apperrors.KindDatabase, err, "delete project") }
+	if err != nil {
+		return failExec(apperrors.KindDatabase, err, "delete project")
+	}
 	n, _ := res.RowsAffected()
-	if n == 0 { return notFound("project") }
+	if n == 0 {
+		return notFound("project")
+	}
 	return nil
 }
 
@@ -298,7 +315,9 @@ func (r *modelRepo) Create(ctx context.Context, name, desc string, tt vtypes.Tas
 	err := r.q.QueryRowContext(ctx,
 		`INSERT INTO models (name, description, task_type, created_at, updated_at) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
 		name, desc, string(tt), m.CreatedAt, m.UpdatedAt).Scan(&m.ID)
-	if err != nil { return nil, failExec(apperrors.KindDatabase, err, "create model") }
+	if err != nil {
+		return nil, failExec(apperrors.KindDatabase, err, "create model")
+	}
 	return m, nil
 }
 func (r *modelRepo) FindByID(ctx context.Context, id string) (*vtypes.Model, error) {
@@ -307,7 +326,9 @@ func (r *modelRepo) FindByID(ctx context.Context, id string) (*vtypes.Model, err
 		`SELECT id, name, description, task_type, created_at, updated_at FROM models WHERE id=$1`, id).
 		Scan(&m.ID, &m.Name, &m.Description, &m.TaskType, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("model") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("model")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "find model")
 	}
 	return m, nil
@@ -318,13 +339,17 @@ func (r *modelRepo) FindByName(ctx context.Context, name string) (*vtypes.Model,
 		`SELECT id, name, description, task_type, created_at, updated_at FROM models WHERE name=$1`, name).
 		Scan(&m.ID, &m.Name, &m.Description, &m.TaskType, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("model") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("model")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "find model")
 	}
 	return m, nil
 }
 func (r *modelRepo) List(ctx context.Context, cursor string, limit int) ([]vtypes.Model, string, bool, error) {
-	if limit <= 0 || limit > 200 { limit = 50 }
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
 	var qb strings.Builder
 	var args []interface{}
 	if cursor != "" {
@@ -337,7 +362,9 @@ func (r *modelRepo) List(ctx context.Context, cursor string, limit int) ([]vtype
 		args = []interface{}{limit + 1}
 	}
 	rows, err := r.q.QueryContext(ctx, qb.String(), args...)
-	if err != nil { return nil, "", false, failExec(apperrors.KindDatabase, err, "list models") }
+	if err != nil {
+		return nil, "", false, failExec(apperrors.KindDatabase, err, "list models")
+	}
 	defer rows.Close()
 	var out []vtypes.Model
 	for rows.Next() {
@@ -347,8 +374,12 @@ func (r *modelRepo) List(ctx context.Context, cursor string, limit int) ([]vtype
 		}
 		out = append(out, m)
 	}
-	hasMore := len(out) > limit; next := ""
-	if hasMore { out = out[:limit]; next = out[len(out)-1].ID }
+	hasMore := len(out) > limit
+	next := ""
+	if hasMore {
+		out = out[:limit]
+		next = out[len(out)-1].ID
+	}
 	return out, next, hasMore, rows.Err()
 }
 
@@ -361,14 +392,20 @@ type ModelVersionRepository interface {
 type modelVersionRepo struct{ q Executor }
 
 func (r *modelVersionRepo) Create(ctx context.Context, mv *vtypes.ModelVersion) (*vtypes.ModelVersion, error) {
-	if mv.CreatedAt.IsZero() { mv.CreatedAt = now() }
-	if mv.Metadata == nil { mv.Metadata = vtypes.JSONB("{}") }
+	if mv.CreatedAt.IsZero() {
+		mv.CreatedAt = now()
+	}
+	if mv.Metadata == nil {
+		mv.Metadata = vtypes.JSONB("{}")
+	}
 	meta, _ := json.Marshal(mv.Metadata)
 	err := r.q.QueryRowContext(ctx,
 		`INSERT INTO model_versions (model_id, version, artifact_uri, runtime, status, metadata, created_at)
 		 VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
 		mv.ModelID, mv.Version, mv.ArtifactURI, string(mv.Runtime), string(mv.Status), meta, mv.CreatedAt).Scan(&mv.ID)
-	if err != nil { return nil, failExec(apperrors.KindDatabase, err, "create model version") }
+	if err != nil {
+		return nil, failExec(apperrors.KindDatabase, err, "create model version")
+	}
 	return mv, nil
 }
 func (r *modelVersionRepo) FindByID(ctx context.Context, id string) (*vtypes.ModelVersion, error) {
@@ -379,34 +416,47 @@ func (r *modelVersionRepo) FindByID(ctx context.Context, id string) (*vtypes.Mod
 		`SELECT id, model_id, version, artifact_uri, runtime, status, metadata, created_at FROM model_versions WHERE id=$1`, id).
 		Scan(&mv.ID, &mv.ModelID, &mv.Version, &mv.ArtifactURI, &rt, &st, &meta, &mv.CreatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("model version") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("model version")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "find model version")
 	}
-	mv.Runtime = vtypes.Runtime(rt); mv.Status = vtypes.ModelVersionStatus(st); mv.Metadata = vtypes.JSONB(meta)
+	mv.Runtime = vtypes.Runtime(rt)
+	mv.Status = vtypes.ModelVersionStatus(st)
+	mv.Metadata = vtypes.JSONB(meta)
 	return mv, nil
 }
 func (r *modelVersionRepo) ListByModel(ctx context.Context, modelID string) ([]vtypes.ModelVersion, error) {
 	rows, err := r.q.QueryContext(ctx,
 		`SELECT id, model_id, version, artifact_uri, runtime, status, metadata, created_at FROM model_versions WHERE model_id=$1 ORDER BY created_at DESC`, modelID)
-	if err != nil { return nil, failExec(apperrors.KindDatabase, err, "list model versions") }
+	if err != nil {
+		return nil, failExec(apperrors.KindDatabase, err, "list model versions")
+	}
 	defer rows.Close()
 	var out []vtypes.ModelVersion
 	for rows.Next() {
 		mv := vtypes.ModelVersion{}
-		var rt, st string; var meta []byte
+		var rt, st string
+		var meta []byte
 		if err := rows.Scan(&mv.ID, &mv.ModelID, &mv.Version, &mv.ArtifactURI, &rt, &st, &meta, &mv.CreatedAt); err != nil {
 			return nil, failExec(apperrors.KindDatabase, err, "scan model version")
 		}
-		mv.Runtime = vtypes.Runtime(rt); mv.Status = vtypes.ModelVersionStatus(st); mv.Metadata = vtypes.JSONB(meta)
+		mv.Runtime = vtypes.Runtime(rt)
+		mv.Status = vtypes.ModelVersionStatus(st)
+		mv.Metadata = vtypes.JSONB(meta)
 		out = append(out, mv)
 	}
 	return out, rows.Err()
 }
 func (r *modelVersionRepo) SetStatus(ctx context.Context, id string, status vtypes.ModelVersionStatus) error {
 	res, err := r.q.ExecContext(ctx, `UPDATE model_versions SET status=$2 WHERE id=$1`, id, string(status))
-	if err != nil { return failExec(apperrors.KindDatabase, err, "set status") }
+	if err != nil {
+		return failExec(apperrors.KindDatabase, err, "set status")
+	}
 	n, _ := res.RowsAffected()
-	if n == 0 { return notFound("model version") }
+	if n == 0 {
+		return notFound("model version")
+	}
 	return nil
 }
 
@@ -421,69 +471,100 @@ type AssetRepository interface {
 type assetRepo struct{ q Executor }
 
 func (r *assetRepo) Create(ctx context.Context, a *vtypes.Asset) (*vtypes.Asset, error) {
-	if a.CreatedAt.IsZero() { a.CreatedAt = now() }
-	if a.Metadata == nil { a.Metadata = vtypes.JSONB("{}") }
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = now()
+	}
+	if a.Metadata == nil {
+		a.Metadata = vtypes.JSONB("{}")
+	}
 	meta, _ := json.Marshal(a.Metadata)
 	err := r.q.QueryRowContext(ctx,
 		`INSERT INTO assets (project_id, owner_id, filename, content_type, size_bytes, storage_key, checksum, metadata, created_at)
 		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
 		a.ProjectID, a.OwnerID, a.Filename, a.ContentType, a.SizeBytes, a.StorageKey, a.Checksum, meta, a.CreatedAt).Scan(&a.ID)
-	if err != nil { return nil, failExec(apperrors.KindDatabase, err, "create asset") }
+	if err != nil {
+		return nil, failExec(apperrors.KindDatabase, err, "create asset")
+	}
 	return a, nil
 }
 func (r *assetRepo) FindByID(ctx context.Context, id string) (*vtypes.Asset, error) {
-	a := &vtypes.Asset{}; var meta []byte
+	a := &vtypes.Asset{}
+	var meta []byte
 	err := r.q.QueryRowContext(ctx,
 		`SELECT id, project_id, owner_id, filename, content_type, size_bytes, storage_key, checksum, metadata, created_at FROM assets WHERE id=$1`, id).
 		Scan(&a.ID, &a.ProjectID, &a.OwnerID, &a.Filename, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.Checksum, &meta, &a.CreatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("asset") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("asset")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "find asset")
 	}
-	a.Metadata = vtypes.JSONB(meta); return a, nil
+	a.Metadata = vtypes.JSONB(meta)
+	return a, nil
 }
 func (r *assetRepo) FindByStorageKey(ctx context.Context, key string) (*vtypes.Asset, error) {
-	a := &vtypes.Asset{}; var meta []byte
+	a := &vtypes.Asset{}
+	var meta []byte
 	err := r.q.QueryRowContext(ctx,
 		`SELECT id, project_id, owner_id, filename, content_type, size_bytes, storage_key, checksum, metadata, created_at FROM assets WHERE storage_key=$1`, key).
 		Scan(&a.ID, &a.ProjectID, &a.OwnerID, &a.Filename, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.Checksum, &meta, &a.CreatedAt)
 	if err != nil {
-		if stderrors.Is(err, sql.ErrNoRows) { return nil, notFound("asset") }
+		if stderrors.Is(err, sql.ErrNoRows) {
+			return nil, notFound("asset")
+		}
 		return nil, failExec(apperrors.KindDatabase, err, "find asset")
 	}
-	a.Metadata = vtypes.JSONB(meta); return a, nil
+	a.Metadata = vtypes.JSONB(meta)
+	return a, nil
 }
 func (r *assetRepo) ListByProject(ctx context.Context, projectID, cursor string, limit int) ([]vtypes.Asset, string, bool, error) {
-	if limit <= 0 || limit > 200 { limit = 50 }
-	var qb strings.Builder; var args []interface{}
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	var qb strings.Builder
+	var args []interface{}
 	qb.WriteString(`SELECT id, project_id, owner_id, filename, content_type, size_bytes, storage_key, checksum, metadata, created_at FROM assets WHERE project_id=$1`)
-	args = append(args, projectID); argn := 2
+	args = append(args, projectID)
+	argn := 2
 	if cursor != "" {
 		fmt.Fprintf(&qb, " AND (created_at, id) < (SELECT created_at, id FROM assets WHERE id=$%d)", argn)
-		args = append(args, cursor); argn++
+		args = append(args, cursor)
+		argn++
 	}
 	fmt.Fprintf(&qb, " ORDER BY created_at DESC, id DESC LIMIT $%d", argn)
 	args = append(args, limit+1)
 	rows, err := r.q.QueryContext(ctx, qb.String(), args...)
-	if err != nil { return nil, "", false, failExec(apperrors.KindDatabase, err, "list assets") }
+	if err != nil {
+		return nil, "", false, failExec(apperrors.KindDatabase, err, "list assets")
+	}
 	defer rows.Close()
 	var out []vtypes.Asset
 	for rows.Next() {
-		a := vtypes.Asset{}; var meta []byte
+		a := vtypes.Asset{}
+		var meta []byte
 		if err := rows.Scan(&a.ID, &a.ProjectID, &a.OwnerID, &a.Filename, &a.ContentType, &a.SizeBytes, &a.StorageKey, &a.Checksum, &meta, &a.CreatedAt); err != nil {
 			return nil, "", false, failExec(apperrors.KindDatabase, err, "scan asset")
 		}
-		a.Metadata = vtypes.JSONB(meta); out = append(out, a)
+		a.Metadata = vtypes.JSONB(meta)
+		out = append(out, a)
 	}
-	hasMore := len(out) > limit; next := ""
-	if hasMore { out = out[:limit]; next = out[len(out)-1].ID }
+	hasMore := len(out) > limit
+	next := ""
+	if hasMore {
+		out = out[:limit]
+		next = out[len(out)-1].ID
+	}
 	return out, next, hasMore, rows.Err()
 }
 func (r *assetRepo) Delete(ctx context.Context, id string) error {
 	res, err := r.q.ExecContext(ctx, `DELETE FROM assets WHERE id=$1`, id)
-	if err != nil { return failExec(apperrors.KindDatabase, err, "delete asset") }
+	if err != nil {
+		return failExec(apperrors.KindDatabase, err, "delete asset")
+	}
 	n, _ := res.RowsAffected()
-	if n == 0 { return notFound("asset") }
+	if n == 0 {
+		return notFound("asset")
+	}
 	return nil
 }
 

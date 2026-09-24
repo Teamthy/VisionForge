@@ -29,9 +29,9 @@ const (
 type ModelVersionStatus string
 
 const (
-	ModelVersionActive  ModelVersionStatus = "ACTIVE"
-	ModelVersionStaging ModelVersionStatus = "STAGING"
-	ModelVersionInactive ModelVersionStatus = "INACTIVE"
+	ModelVersionActive     ModelVersionStatus = "ACTIVE"
+	ModelVersionStaging    ModelVersionStatus = "STAGING"
+	ModelVersionInactive   ModelVersionStatus = "INACTIVE"
 	ModelVersionDeprecated ModelVersionStatus = "DEPRECATED"
 )
 
@@ -113,22 +113,22 @@ type Asset struct {
 
 // InferenceJob tracks an inference request through its lifecycle.
 type InferenceJob struct {
-	ID              string    `json:"id"`
-	ProjectID       string    `json:"project_id"`
-	AssetID         string    `json:"asset_id"`
-	ModelVersionID  string    `json:"model_version_id"`
-	Status          JobStatus `json:"status"`
-	Priority        Priority  `json:"priority"`
-	Attempts        int       `json:"attempts"`
-	MaxAttempts     int       `json:"max_attempts"`
-	IdempotencyKey  *string   `json:"idempotency_key,omitempty"`
-	ErrorCode       *ErrorCode `json:"error_code,omitempty"`
-	ErrorMessage    *string   `json:"error_message,omitempty"`
-	QueuedAt        *time.Time `json:"queued_at,omitempty"`
-	StartedAt       *time.Time `json:"started_at,omitempty"`
-	CompletedAt     *time.Time `json:"completed_at,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID             string     `json:"id"`
+	ProjectID      string     `json:"project_id"`
+	AssetID        string     `json:"asset_id"`
+	ModelVersionID string     `json:"model_version_id"`
+	Status         JobStatus  `json:"status"`
+	Priority       Priority   `json:"priority"`
+	Attempts       int        `json:"attempts"`
+	MaxAttempts    int        `json:"max_attempts"`
+	IdempotencyKey *string    `json:"idempotency_key,omitempty"`
+	ErrorCode      *ErrorCode `json:"error_code,omitempty"`
+	ErrorMessage   *string    `json:"error_message,omitempty"`
+	QueuedAt       *time.Time `json:"queued_at,omitempty"`
+	StartedAt      *time.Time `json:"started_at,omitempty"`
+	CompletedAt    *time.Time `json:"completed_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 // InferenceResult stores model output for a successful or failed job.

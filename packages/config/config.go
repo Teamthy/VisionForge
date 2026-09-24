@@ -15,16 +15,16 @@ type Config struct {
 	Environment string
 	LogLevel    string
 
-	HTTP HTTPConfig
-	DB   DBConfig
-	Redis RedisConfig
-	Storage StorageConfig
-	Auth  AuthConfig
-	Worker WorkerConfig
-	ML    MLConfig
-	Web   WebConfig
-	Otel  OtelConfig
-	Limits LimitsConfig
+	HTTP      HTTPConfig
+	DB        DBConfig
+	Redis     RedisConfig
+	Storage   StorageConfig
+	Auth      AuthConfig
+	Worker    WorkerConfig
+	ML        MLConfig
+	Web       WebConfig
+	Otel      OtelConfig
+	Limits    LimitsConfig
 	RateLimit RateLimitConfig
 }
 
@@ -80,14 +80,14 @@ func (r RedisConfig) Addr() string { return fmt.Sprintf("%s:%d", r.Host, r.Port)
 
 // StorageConfig holds object storage settings.
 type StorageConfig struct {
-	Backend       string // "minio" | "s3"
-	Endpoint      string
-	AccessKey     string
-	SecretKey     string
-	Region        string
-	Bucket        string
+	Backend        string // "minio" | "s3"
+	Endpoint       string
+	AccessKey      string
+	SecretKey      string
+	Region         string
+	Bucket         string
 	ForcePathStyle bool
-	PresignExpiry time.Duration
+	PresignExpiry  time.Duration
 }
 
 // AuthConfig holds JWT / password settings.
@@ -100,12 +100,12 @@ type AuthConfig struct {
 
 // WorkerConfig holds worker runtime settings.
 type WorkerConfig struct {
-	Concurrency   int
-	PollInterval  time.Duration
-	MaxAttempts   int
-	DeadTTL       time.Duration
-	QueueName     string
-	MetricsP      int // Prometheus/health port exposed by the worker process
+	Concurrency  int
+	PollInterval time.Duration
+	MaxAttempts  int
+	DeadTTL      time.Duration
+	QueueName    string
+	MetricsP     int // Prometheus/health port exposed by the worker process
 }
 
 // MetricsPort returns the worker's /metrics + /healthz listen port.
@@ -118,11 +118,11 @@ func (w WorkerConfig) MetricsPort() int {
 
 // MLConfig holds Python ML service settings.
 type MLConfig struct {
-	ServiceURL    string
-	ArtifactsDir  string
-	Device        string
-	MaxImageDim   int
-	MaxImageBytes int64
+	ServiceURL     string
+	ArtifactsDir   string
+	Device         string
+	MaxImageDim    int
+	MaxImageBytes  int64
 	MaxInferenceMs int64
 }
 
@@ -153,9 +153,9 @@ type LimitsConfig struct {
 
 // RateLimitConfig holds per-endpoint rate limits.
 type RateLimitConfig struct {
-	AuthPerMin    int
+	AuthPerMin       int
 	APIRequestPerMin int
-	UploadPerMin  int
+	UploadPerMin     int
 }
 
 // Load reads configuration from environment, applying defaults.
@@ -229,19 +229,19 @@ func Load() (*Config, error) {
 	}
 
 	cfg.ML = MLConfig{
-		ServiceURL:      getEnv("ML_SERVICE_URL", "http://localhost:8090"),
-		ArtifactsDir:    getEnv("ML_ARTIFACTS_DIR", "./artifacts"),
-		Device:          getEnv("ML_DEVICE", "cpu"),
-		MaxImageDim:     getEnvInt("ML_MAX_IMAGE_DIMENSION", 4096),
-		MaxImageBytes:   getEnvInt64("ML_MAX_IMAGE_BYTES", 20*1024*1024),
-		MaxInferenceMs:  getEnvInt64("ML_MAX_INFERENCE_MS", 60000),
+		ServiceURL:     getEnv("ML_SERVICE_URL", "http://localhost:8090"),
+		ArtifactsDir:   getEnv("ML_ARTIFACTS_DIR", "./artifacts"),
+		Device:         getEnv("ML_DEVICE", "cpu"),
+		MaxImageDim:    getEnvInt("ML_MAX_IMAGE_DIMENSION", 4096),
+		MaxImageBytes:  getEnvInt64("ML_MAX_IMAGE_BYTES", 20*1024*1024),
+		MaxInferenceMs: getEnvInt64("ML_MAX_INFERENCE_MS", 60000),
 	}
 
 	cfg.Web = WebConfig{
-		Port:          getEnvInt("WEB_PORT", 3000),
-		NextPublicAPI: getEnv("NEXT_PUBLIC_API_URL", "http://localhost:8080/api/v1"),
+		Port:           getEnvInt("WEB_PORT", 3000),
+		NextPublicAPI:  getEnv("NEXT_PUBLIC_API_URL", "http://localhost:8080/api/v1"),
 		NextAuthSecret: getEnv("NEXTAUTH_SECRET", "dev-secret"),
-		NextAuthURL:   getEnv("NEXTAUTH_URL", "http://localhost:3000"),
+		NextAuthURL:    getEnv("NEXTAUTH_URL", "http://localhost:3000"),
 	}
 
 	cfg.Otel = OtelConfig{
@@ -260,9 +260,9 @@ func Load() (*Config, error) {
 	}
 
 	cfg.RateLimit = RateLimitConfig{
-		AuthPerMin:        getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 10),
-		APIRequestPerMin:  getEnvInt("RATE_LIMIT_API_PER_MIN", 120),
-		UploadPerMin:      getEnvInt("RATE_LIMIT_UPLOAD_PER_MIN", 30),
+		AuthPerMin:       getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 10),
+		APIRequestPerMin: getEnvInt("RATE_LIMIT_API_PER_MIN", 120),
+		UploadPerMin:     getEnvInt("RATE_LIMIT_UPLOAD_PER_MIN", 30),
 	}
 
 	// Validate critical secrets in production.

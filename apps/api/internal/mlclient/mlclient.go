@@ -58,12 +58,12 @@ type PredictRequest struct {
 
 // PredictResponse is the ML inference response.
 type PredictResponse struct {
-	ModelVersionID string           `json:"model_version_id"`
-	TaskType       vtypes.TaskType  `json:"task_type"`
-	Detections     []vtypes.Detection `json:"detections,omitempty"`
-	Predictions    []vtypes.Prediction `json:"predictions,omitempty"`
-	InferenceTimeMs int64           `json:"inference_time_ms"`
-	ProcessingTimeMs int64          `json:"processing_time_ms"`
+	ModelVersionID   string              `json:"model_version_id"`
+	TaskType         vtypes.TaskType     `json:"task_type"`
+	Detections       []vtypes.Detection  `json:"detections,omitempty"`
+	Predictions      []vtypes.Prediction `json:"predictions,omitempty"`
+	InferenceTimeMs  int64               `json:"inference_time_ms"`
+	ProcessingTimeMs int64               `json:"processing_time_ms"`
 }
 
 // Health pings the ML service.

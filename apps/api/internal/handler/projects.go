@@ -22,35 +22,54 @@ func (h *Handler) ListProjects(c *gin.Context) {
 	cursor := c.Query("cursor")
 	limit := parseLimit(c, 20, 100)
 	list, next, hasMore, err := h.s.Projects.List(c.Request.Context(), uid, cursor, limit)
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	okMeta(c, http.StatusOK, list, pagMeta(next, hasMore, requestID(c)))
 }
 
 func (h *Handler) CreateProject(c *gin.Context) {
 	var req projectReq
-	if err := c.ShouldBindJSON(&req); err != nil { fail(c, errBind(err)); return }
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, errBind(err))
+		return
+	}
 	p, err := h.s.Projects.Create(c.Request.Context(), actorFrom(c), req.Name, req.Description)
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	ok(c, http.StatusCreated, p)
 }
 
 func (h *Handler) GetProject(c *gin.Context) {
 	p, err := h.s.Projects.Get(c.Request.Context(), currentUserID(c), userRole(c), c.Param("id"))
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	ok(c, http.StatusOK, p)
 }
 
 func (h *Handler) UpdateProject(c *gin.Context) {
 	var req projectUpdateReq
-	if err := c.ShouldBindJSON(&req); err != nil { fail(c, errBind(err)); return }
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, errBind(err))
+		return
+	}
 	p, err := h.s.Projects.Update(c.Request.Context(), actorFrom(c), c.Param("id"), req.Name, req.Description)
-	if err != nil { fail(c, err); return }
+	if err != nil {
+		fail(c, err)
+		return
+	}
 	ok(c, http.StatusOK, p)
 }
 
 func (h *Handler) DeleteProject(c *gin.Context) {
 	if err := h.s.Projects.Delete(c.Request.Context(), actorFrom(c), c.Param("id")); err != nil {
-		fail(c, err); return
+		fail(c, err)
+		return
 	}
 	ok(c, http.StatusOK, gin.H{"deleted": true})
 }

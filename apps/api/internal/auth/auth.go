@@ -24,9 +24,9 @@ const (
 // Claims are the JWT claims used for access tokens.
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID string     `json:"uid"`
+	UserID string      `json:"uid"`
 	Role   vtypes.Role `json:"role"`
-	Type   string     `json:"typ"`
+	Type   string      `json:"typ"`
 }
 
 // Hasher hashes and verifies passwords.

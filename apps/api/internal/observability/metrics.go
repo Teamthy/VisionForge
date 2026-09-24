@@ -11,17 +11,17 @@ type Metrics struct {
 	HTTPRequestDuration *prometheus.HistogramVec
 	HTTPErrorsTotal     *prometheus.CounterVec
 
-	DBLatency *prometheus.HistogramVec
+	DBLatency    *prometheus.HistogramVec
 	RedisLatency *prometheus.HistogramVec
 
-	JobsCreated    prometheus.Counter
-	JobsSucceeded  prometheus.Counter
-	JobsFailed     prometheus.Counter
-	JobsRetried    prometheus.Counter
-	QueueDepth     prometheus.Gauge
-	ActiveWorkers  prometheus.Gauge
+	JobsCreated   prometheus.Counter
+	JobsSucceeded prometheus.Counter
+	JobsFailed    prometheus.Counter
+	JobsRetried   prometheus.Counter
+	QueueDepth    prometheus.Gauge
+	ActiveWorkers prometheus.Gauge
 
-	InferenceDuration *prometheus.HistogramVec
+	InferenceDuration      *prometheus.HistogramVec
 	ModelInferenceDuration *prometheus.HistogramVec
 
 	UploadFailures prometheus.Counter

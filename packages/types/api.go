@@ -69,7 +69,7 @@ type RefreshResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
-	ExpiresIn    int `json:"expires_in"`
+	ExpiresIn    int    `json:"expires_in"`
 }
 
 type LogoutRequest struct {
@@ -98,11 +98,11 @@ type CreateAssetUploadRequest struct {
 }
 
 type CreateAssetUploadResponse struct {
-	AssetID      string            `json:"asset_id"`
-	UploadURL    string            `json:"upload_url"`
-	StorageKey   string            `json:"storage_key"`
-	ExpiresIn    int               `json:"expires_in"`
-	Fields       map[string]string `json:"fields,omitempty"` // form fields for presigned POST
+	AssetID    string            `json:"asset_id"`
+	UploadURL  string            `json:"upload_url"`
+	StorageKey string            `json:"storage_key"`
+	ExpiresIn  int               `json:"expires_in"`
+	Fields     map[string]string `json:"fields,omitempty"` // form fields for presigned POST
 }
 
 type ConfirmAssetUploadRequest struct {
@@ -146,8 +146,8 @@ type CreateInferenceResponse struct {
 }
 
 type ListJobsQuery struct {
-	ProjectID string   `form:"project_id"`
+	ProjectID string      `form:"project_id"`
 	Status    []JobStatus `form:"status"`
-	Limit     int      `form:"limit,default=50"`
-	Cursor    string   `form:"cursor"`
+	Limit     int         `form:"limit,default=50"`
+	Cursor    string      `form:"cursor"`
 }

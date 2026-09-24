@@ -18,8 +18,8 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/visionforge/visionforge/apps/api/internal/db"
-	"github.com/visionforge/visionforge/apps/api/internal/observability"
 	"github.com/visionforge/visionforge/apps/api/internal/mlclient"
+	"github.com/visionforge/visionforge/apps/api/internal/observability"
 	"github.com/visionforge/visionforge/apps/api/internal/queue"
 	"github.com/visionforge/visionforge/apps/api/internal/repository"
 	"github.com/visionforge/visionforge/apps/api/internal/storage"
